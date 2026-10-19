@@ -1,0 +1,13 @@
+# MouthBeat editor/player prototype
+
+Run from this directory with `python3 -m http.server 5173 --bind 127.0.0.1`, then open http://localhost:5173. No package installation or build step is needed. For the existing Android pod, copy this directory to `/workspace/editor` and run `python3 -m http.server 5173 --bind 0.0.0.0 --directory /workspace/editor` in the container; its port is already bound to VM localhost.
+
+Features: editable Strudel patterns, play/update/stop, 30–240 BPM control (four beats per cycle), seven starter presets, including house, hip-hop, techno, and electro grooves with original locally generated kick/snare/hat/clap WAVs, local draft autosave, import and export of pattern text, keyboard shortcuts, responsive layout, and a service worker caching the editor/runtime after the first successful load. The tempo control sets the initial scheduler tempo; code can override it. Export currently includes code only. Preset selection and import replace the current draft and stop playback.
+
+The runtime is the unmodified `@strudel/web` 1.3.0 published distribution, bundled locally with its clock worker. Presets use synthesized oscillators and four original generated drum samples, with no remote samples or fonts. User-written code can request network resources; offline support is limited to cached editor assets and bundled starter patterns. Serve via localhost or HTTPS for service-worker support. Clear this origin's site data to remove its cached installation and draft.
+
+License: AGPL-3.0-or-later for the original MouthBeat editor code, created 2026-10-19, and for Strudel. See ../LICENSE and vendor/strudel/LICENSE. The original upstream npm archive is retained in vendor/strudel/source/web-1.3.0.tgz. Review bundled/transitive dependency licenses and deliver complete corresponding source before distributing this integration. The private repository is not a public source offer.
+
+This is a trusted-code, personal development prototype. The editor evaluates JavaScript in its own page. Do not run untrusted imports. Execution isolation, resource limits, a richer code editor, Android audio/lifecycle testing, and a full license/security review remain release gates. Stop suspends audio as well as stopping scheduling; an infinite JavaScript loop can still block the page.
+
+Playback highlighting queries the evaluated Strudel pattern at its scheduler/audio time and highlights source ranges provided by Strudel. The current voices appear below the editor; click one to select its most recent event in the code. Editing pauses highlighting until Update so old audio is never attributed to new code. Highlighting follows event spans, not effect tails, and is suspended in background tabs by browser animation scheduling.

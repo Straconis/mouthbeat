@@ -4,7 +4,7 @@
 
 MouthBeat is a proposed Android-first music sketchpad: capture a short musical idea, translate it into editable Strudel patterns, and develop it through visual controls or live code. Playback is intended to happen inside the app, including offline with bundled sounds.
 
-> **Status: planning / pre-prototype.** This repository starts with the product concept and delivery roadmap. No working mobile app, validated transcription engine, payment integration, or commercial release is claimed. MouthBeat is a working name; trademark clearance remains pending.
+> **Status: browser editor/player prototype.** The [editor](editor/README.md) now includes bundled Strudel playback, starter grooves, and event-based code highlighting. Android packaging, recording/transcription, payments, and commercial release remain planned. MouthBeat is a working name; trademark clearance remains pending.
 
 ## The experience
 
@@ -141,6 +141,6 @@ Commercial use can coexist with AGPL compliance. Plan for license notices, corre
 
 Intended GitHub home: `Straconis/mouthbeat`, private during planning. Private development is a workflow choice, not a proprietary licensing strategy for a distributed Strudel integration.
 
-There is no executable app or build command yet. No repository-wide software license is selected at this planning stage; choose and include an appropriate license before adding or distributing application code. Upstream components retain their own licenses. Do not add secrets, user recordings, uncleared sounds, or third-party code without provenance. Record architecture and licensing decisions as implementation begins.
+Run the browser prototype using the instructions in [editor/README.md](editor/README.md). The original editor code is licensed AGPL-3.0-or-later; see [LICENSE](LICENSE). Upstream components retain their own licenses. Do not add secrets, user recordings, uncleared sounds, or third-party code without provenance. Record architecture and licensing decisions as implementation begins.
 
 **Next milestone:** prove a short tapped or beatboxed rhythm can become a corrected, editable loop with fully offline playback on a real Android phone.
