@@ -1,0 +1,21 @@
+plugins { id 'com.android.application' }
+android {
+ namespace 'com.straconis.mouthbeat'
+ compileSdk 36
+ buildToolsVersion '36.0.0'
+ defaultConfig {
+  applicationId 'com.straconis.mouthbeat'
+  minSdk 26
+  targetSdk 35
+  versionCode 1
+  versionName '0.1.0-dev'
+ }
+ signingConfigs { debug { storeFile file((System.getenv('ANDROID_USER_HOME') ?: System.getProperty('user.home') + '/.android') + '/debug.keystore') } }
+ sourceSets { main { assets.srcDirs = [layout.buildDirectory.dir('generated/editorAssets')] } }
+}
+tasks.register('syncEditor', Sync) {
+ from('../../editor') { exclude 'README.md', 'sw.js', 'vendor/strudel/source/**', 'vendor/strudel/index.js' }
+ into layout.buildDirectory.dir('generated/editorAssets/editor')
+}
+tasks.named('preBuild').configure { dependsOn 'syncEditor' }
+dependencies { implementation 'androidx.webkit:webkit:1.14.0' }

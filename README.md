@@ -4,7 +4,7 @@
 
 MouthBeat is a proposed Android-first music sketchpad: capture a short musical idea, translate it into editable Strudel patterns, and develop it through visual controls or live code. Playback is intended to happen inside the app, including offline with bundled sounds.
 
-> **Status: browser editor/player prototype.** The [editor](editor/README.md) now includes bundled Strudel playback, starter grooves, and event-based code highlighting. Android packaging, recording/transcription, payments, and commercial release remain planned. MouthBeat is a working name; trademark clearance remains pending.
+> **Status: browser editor/player with an Android test shell.** The [editor](editor/README.md) now includes bundled Strudel playback, starter grooves, and event-based code highlighting. The [Android test app](android/README.md) packages the player for private device testing. Recording/transcription, payments, and commercial release remain planned; phone validation is outstanding. MouthBeat is a working name; trademark clearance remains pending.
 
 ## The experience
 
