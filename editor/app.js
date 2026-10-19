@@ -69,13 +69,13 @@ async function play() {
     await evaluate($('code').value);
     if (run !== generation) { hush(); await getAudioContext().suspend(); return; }
     if (evalError) throw evalError;
-    playing = true; $('state').textContent = 'Playing'; $('dot').classList.add('playing'); $('play').textContent = '↻ Update pattern';
+    lastSignature = ''; playing = true; $('state').textContent = 'Playing'; $('dot').classList.add('playing'); $('play').textContent = '↻ Update pattern';
     message('Playing · edit the code and press Update to hear your changes.'); persist();
   } catch(error) { message(`Could not play: ${error.message || error}`, true); if (!playing) stopped(); }
   finally { busy = false; $('play').disabled = false; }
 }
 $('play').onclick = play; $('stop').onclick = stop;
-$('code').addEventListener('input', () => {persist(); renderHighlights([]);}); $('tempo').addEventListener('input', persist);
+$('code').addEventListener('input', () => {persist(); lastSignature = ''; renderHighlights([]); if(playing) message('Edits pending · press Update to hear them. Unchanged notes keep highlighting.');}); $('tempo').addEventListener('input', persist);
 $('code').addEventListener('keydown', (event) => { if (event.key === 'Tab') { event.preventDefault(); const input = event.target; input.setRangeText('  ',input.selectionStart,input.selectionEnd,'end'); persist(); } });
 document.addEventListener('keydown', (event) => { if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') { event.preventDefault(); play(); } if (event.key === 'Escape') stop(); });
 for (const button of document.querySelectorAll('[data-preset]')) button.onclick = () => { if (engine) stop(); $('code').value = presets[button.dataset.preset]; if (grooves[button.dataset.preset]) $('tempo').value = grooves[button.dataset.preset].bpm; persist(); message(grooves[button.dataset.preset]?.tip || 'Starter loaded. Press Play to hear it.'); };
@@ -88,6 +88,21 @@ try {
 } catch(error) { $('state').textContent = 'Engine unavailable'; message(`Engine could not start: ${error.message}`, true); }
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').then(async registration => { await navigator.serviceWorker.ready; $('offline').textContent = 'Offline cache ready · bundled drum sounds'; }).catch(() => { $('offline').textContent = 'Local engine · offline cache unavailable'; });
 
+// Map only unchanged source ranges while a draft differs from the playing code.
+// Edited tokens have no honest playback location until Update succeeds.
+function locationMapper(active, draft) {
+  if (active === draft) return location => location;
+  let prefix = 0;
+  while (prefix < active.length && prefix < draft.length && active[prefix] === draft[prefix]) prefix++;
+  let suffix = 0;
+  while (suffix < active.length-prefix && suffix < draft.length-prefix && active[active.length-1-suffix] === draft[draft.length-1-suffix]) suffix++;
+  const end = active.length-suffix, delta = draft.length-active.length;
+  return location => {
+    if (location.end <= prefix) return location;
+    if (location.start >= end) return {start:location.start+delta, end:location.end+delta};
+    return null;
+  };
+}
 // Use Strudel's evaluated event locations and its audio clock, not a visual metronome.
 const overlay = $('code-highlights');
 let lastFrame = 0, lastSignature = '';
@@ -110,20 +125,23 @@ function highlightFrame(time) {
   requestAnimationFrame(highlightFrame);
   if(time-lastFrame < 35) return; lastFrame=time;
   const state = engine?.state;
-  if (!playing || !state?.pattern || $('code').value !== state.activeCode) {
-    const signature = 'idle:' + $('code').value;
+  if (!playing || !state?.pattern) {
+    const signature = 'idle:' + playing + ':' + $('code').value;
     if(lastSignature !== signature) { renderHighlights([]); $('sounding').textContent = playing ? 'Code changed · press Update to sync playback highlights.' : 'Playback highlights will appear in the code.'; lastSignature=signature; }
     return;
   }
   try {
     const now = Math.max(0, engine.scheduler.now());
     const haps = state.pattern.queryArc(now,now+0.00001);
-    const ranges = haps.flatMap(hap => hap.context.locations || []);
-    const signature = JSON.stringify(ranges);
+    const mapLocation = locationMapper(state.activeCode, $('code').value);
+    const ranges = haps.flatMap(hap => hap.context.locations || []).map(mapLocation).filter(Boolean);
+    const dirty = $('code').value !== state.activeCode;
+    const signature = JSON.stringify([$('code').value, ranges]);
     if(signature === lastSignature) return; lastSignature=signature;
     renderHighlights(ranges);
     const panel = $('sounding');
     if (!panel.querySelector('button')) { panel.replaceChildren(); const label = document.createElement('span'); label.textContent='HEARING NOW ·'; panel.append(label); }
+    panel.querySelector('span').textContent = dirty ? 'PLAYING PREVIOUS VERSION · UPDATE TO HEAR EDITS' : 'HEARING NOW ·';
     for(const button of panel.querySelectorAll('button')) button.style.opacity='0.4';
     for(const hap of haps) {
       const value = hap.value;
@@ -132,7 +150,7 @@ function highlightFrame(time) {
       if(!button) { button=document.createElement('button'); button.dataset.voice=voice; panel.append(button); }
       button.textContent = [value.s, value.note].filter(v => v !== undefined).join(' · ');
       button.style.opacity='1'; button.title='Select this event in the code';
-      const location = hap.context.locations?.[0];
+      const location = (hap.context.locations || []).map(mapLocation).find(Boolean);
       button.onclick=()=> { if(location) { $('code').focus(); $('code').setSelectionRange(location.start,location.end); } };
     }
   } catch { $('sounding').textContent='Highlighting unavailable for this pattern.'; }
